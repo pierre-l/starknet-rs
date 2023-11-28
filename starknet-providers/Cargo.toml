@@ -28,6 +28,7 @@ serde_json = "1.0.96"
 serde_with = "2.3.2"
 
 [dev-dependencies]
+env_logger = "0.10"
 starknet-providers = { path = ".", features = ["no_unknown_fields"] }
 tokio = { version = "1.27.0", features = ["full"] }
 

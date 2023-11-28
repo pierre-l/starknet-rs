@@ -855,6 +855,42 @@ async fn jsonrpc_trace_invoke() {
 }
 
 #[tokio::test]
+async fn jsonrpc_1570() {
+    env_logger::init();
+    let rpc_client = create_jsonrpc_client();
+
+    let trace1 = rpc_client
+        .trace_transaction(
+            FieldElement::from_hex_be(
+                "0x00b56b03731379e3b4d53834e1f8edee7afb69aeb9bd889f5f33c8476cb717be",
+            )
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    let trace2 = rpc_client
+        .trace_transaction(
+            FieldElement::from_hex_be(
+                "0x48b0346433513e1ed38cd99bfbbfbf74ed0f0ba1bd0c56272789775b40e0d89",
+            )
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    let trace = match trace2 {
+        TransactionTrace::Invoke(trace) => trace,
+        _ => panic!("unexpected trace type"),
+    };
+
+    match trace.execute_invocation {
+        ExecuteInvocation::Success(_) => {}
+        _ => panic!("unexpected execution result"),
+    }
+}
+
+#[tokio::test]
 async fn jsonrpc_trace_invoke_reverted() {
     let rpc_client = create_jsonrpc_client();
 
