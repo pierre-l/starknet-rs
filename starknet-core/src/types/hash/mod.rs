@@ -3,35 +3,33 @@ use starknet_ff::FieldElement;
 
 use super::Event;
 
-pub trait BlockExt {
+mod tree;
 
+pub trait PedersenHash {
+    fn pedersen_hash(&self) -> FieldElement;
 }
 
-pub trait EventExt {
+impl PedersenHash for Event {
     /// Calculate the hash of an event.
     ///
     /// See the [documentation](https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/starknet-events/#event_hash)
     /// for details.
-    fn calculate_event_hash(event: &Event) -> FieldElement;
-}
-
-impl EventExt for Event {
-    fn calculate_event_hash(event: &Event) -> FieldElement {
+    fn pedersen_hash(&self) -> FieldElement {
         let mut keys_hash = HashChain::default();
-        for key in event.keys.iter() {
+        for key in self.keys.iter() {
             keys_hash.update(*key);
         }
         let keys_hash = keys_hash.finalize();
 
         let mut data_hash = HashChain::default();
-        for data in event.data.iter() {
+        for data in self.data.iter() {
             data_hash.update(*data);
         }
         let data_hash = data_hash.finalize();
 
         
         let mut event_hash = HashChain::default();
-        event_hash.update(*&event.from_address);
+        event_hash.update(*&self.from_address);
         event_hash.update(keys_hash);
         event_hash.update(data_hash);
 

@@ -8,7 +8,7 @@ use crate::serde::unsigned_field_element::UfeHex;
 pub use starknet_ff::*;
 
 mod conversions;
-mod extensions;
+pub mod hash;
 mod serde_impls;
 
 // TODO: better namespacing of exports?
