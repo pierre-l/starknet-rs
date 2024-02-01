@@ -1,9 +1,10 @@
 use starknet_core::{
+    block_hash::compute_block_hash,
     types::{
         BlockId, BlockTag, BroadcastedInvokeTransaction, BroadcastedInvokeTransactionV1,
         BroadcastedTransaction, ContractClass, DeclareTransaction, DeployAccountTransaction,
-        EthAddress, EventFilter, ExecuteInvocation, ExecutionResult, FieldElement, FunctionCall,
-        InvokeTransaction, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
+        EthAddress, Event, EventFilter, ExecuteInvocation, ExecutionResult, FieldElement,
+        FunctionCall, InvokeTransaction, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
         MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, StarknetError,
         SyncStatusType, Transaction, TransactionExecutionStatus, TransactionReceipt,
         TransactionStatus, TransactionTrace,
@@ -940,6 +941,59 @@ async fn jsonrpc_trace_deploy_account() {
         TransactionTrace::DeployAccount(_) => {}
         _ => panic!("unexpected trace type"),
     }
+}
+
+#[tokio::test]
+async fn block_hashing() {
+    let rpc_client = create_jsonrpc_client();
+
+    let block_id = BlockId::Tag(BlockTag::Latest);
+    let block = rpc_client.get_block_with_txs(block_id).await.unwrap();
+
+    let block = match block {
+        MaybePendingBlockWithTxs::Block(block) => block,
+        _ => panic!("unexpected block response type"),
+    };
+
+    let page_size = 1024;
+    let mut events = vec![];
+    let mut last_token = None;
+    let mut continue_ = true;
+
+    while continue_ {
+        let events_page = rpc_client
+            .get_events(
+                EventFilter {
+                    from_block: Some(block_id),
+                    to_block: Some(block_id),
+                    address: None,
+                    keys: None,
+                },
+                last_token,
+                page_size,
+            )
+            .await
+            .unwrap();
+        last_token = events_page.continuation_token;
+
+        if last_token.is_none() {
+            continue_ = false;
+        }
+
+        let mut new_events = events_page
+            .events
+            .into_iter()
+            .map(|e| Event {
+                from_address: e.from_address,
+                keys: e.keys,
+                data: e.data,
+            })
+            .collect::<Vec<Event>>();
+        events.append(&mut new_events);
+    }
+
+    let expected = block.block_hash;
+    assert_eq!(compute_block_hash(&block, &events), expected);
 }
 
 // NOTE: `addXxxxTransaction` methods are harder to test here since they require signatures. These

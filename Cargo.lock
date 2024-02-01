@@ -1690,10 +1690,12 @@ name = "starknet-core"
 version = "0.9.0"
 dependencies = [
  "base64 0.21.0",
+ "bitvec",
  "criterion",
  "flate2",
  "hex",
  "hex-literal",
+ "lazy_static",
  "serde",
  "serde_json",
  "serde_json_pythonic",

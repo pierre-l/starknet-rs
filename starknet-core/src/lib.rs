@@ -12,4 +12,6 @@ pub mod utils;
 
 pub mod chain_id;
 
+pub mod block_hash;
+
 extern crate alloc;
