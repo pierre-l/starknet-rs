@@ -1,12 +1,6 @@
 use starknet_core::{
     types::{
-        BlockId, BlockTag, BroadcastedInvokeTransaction, BroadcastedInvokeTransactionV1,
-        BroadcastedTransaction, ContractClass, DeclareTransaction, DeployAccountTransaction,
-        EthAddress, EventFilter, ExecuteInvocation, ExecutionResult, FieldElement, FunctionCall,
-        InvokeTransaction, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
-        MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, StarknetError,
-        SyncStatusType, Transaction, TransactionExecutionStatus, TransactionReceipt,
-        TransactionStatus, TransactionTrace,
+        hash::compute_block_hash, BlockId, BlockTag, BroadcastedInvokeTransaction, BroadcastedInvokeTransactionV1, BroadcastedTransaction, ContractClass, DeclareTransaction, DeployAccountTransaction, EthAddress, Event, EventFilter, ExecuteInvocation, ExecutionResult, FieldElement, FunctionCall, InvokeTransaction, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingStateUpdate, MaybePendingTransactionReceipt, MsgFromL1, StarknetError, SyncStatusType, Transaction, TransactionExecutionStatus, TransactionReceipt, TransactionStatus, TransactionTrace
     },
     utils::{get_selector_from_name, get_storage_var_address},
 };
@@ -36,7 +30,7 @@ async fn jsonrpc_get_block_with_tx_hashes() {
     let rpc_client = create_jsonrpc_client();
 
     let block = rpc_client
-        .get_block_with_tx_hashes(BlockId::Tag(BlockTag::Latest))
+        .get_block_with_tx_hashes(BlockId::Number(942701))
         .await
         .unwrap();
 
@@ -49,11 +43,56 @@ async fn jsonrpc_get_block_with_tx_hashes() {
 }
 
 #[tokio::test]
+async fn block_hashing() {
+    let rpc_client = create_jsonrpc_client();
+
+    let block_number = 183862;
+    // TODO let block_number = 928343;
+    let block = rpc_client
+        .get_block_with_txs(BlockId::Number(block_number))
+        .await
+        .unwrap();
+
+    let block = match block {
+        MaybePendingBlockWithTxs::Block(block) => block,
+        _ => panic!("unexpected block response type"),
+    };
+
+    let page_size = 1000;
+    let events_page = rpc_client
+        .get_events(
+            EventFilter {
+                from_block: Some(BlockId::Number(block_number)),
+                to_block: Some(BlockId::Number(block_number)),
+                address: None,
+                keys: None,
+            },
+            None,
+            page_size,
+        )
+        .await
+        .unwrap();
+
+    assert!((events_page.events.len() as u64) < page_size);
+
+    let events = events_page.events.into_iter().map(|e| Event {
+        from_address: e.from_address,
+        keys: e.keys,
+        data: e.data,
+    }).collect::<Vec<Event>>();
+
+    let expected = block.block_hash;
+    assert_eq!(compute_block_hash(&block, &events).unwrap(), expected);
+}
+
+#[tokio::test]
 async fn jsonrpc_get_block_with_txs() {
+    // TODO Remove
+    env_logger::init();
     let rpc_client = create_jsonrpc_client();
 
     let block = rpc_client
-        .get_block_with_txs(BlockId::Tag(BlockTag::Latest))
+        .get_block_with_txs(BlockId::Number(928343))
         .await
         .unwrap();
 
@@ -793,13 +832,15 @@ async fn jsonrpc_syncing() {
 
 #[tokio::test]
 async fn jsonrpc_get_events() {
+    // TODO Remove
+    env_logger::init();
     let rpc_client = create_jsonrpc_client();
 
     let events = rpc_client
         .get_events(
             EventFilter {
-                from_block: Some(BlockId::Number(234500)),
-                to_block: Some(BlockId::Number(235000)),
+                from_block: Some(BlockId::Number(928343)),
+                to_block: Some(BlockId::Number(928343)),
                 address: None,
                 keys: None,
             },
