@@ -30,8 +30,6 @@ serde_with = "2.3.2"
 [dev-dependencies]
 starknet-providers = { path = ".", features = ["no_unknown_fields"] }
 tokio = { version = "1.27.0", features = ["full"] }
-# TODO Remove
-env_logger = "0.11.1"
 
 [features]
 default = []

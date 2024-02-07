@@ -36,7 +36,7 @@ async fn jsonrpc_get_block_with_tx_hashes() {
     let rpc_client = create_jsonrpc_client();
 
     let block = rpc_client
-        .get_block_with_tx_hashes(BlockId::Number(942701))
+        .get_block_with_tx_hashes(BlockId::Tag(BlockTag::Latest))
         .await
         .unwrap();
 
