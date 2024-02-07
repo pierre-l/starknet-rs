@@ -1,3 +1,4 @@
+//! Ported from [Papyrus](https://github.com/starkware-libs/papyrus/blob/v0.2.0/crates/papyrus_common/src/patricia_hash_tree.rs)
 //! Patricia hash tree implementation.
 //!
 //! Supports root hash calculation for Stark felt values, keyed by consecutive 64 bits numbers,
@@ -19,10 +20,6 @@
 //! - A leaf: The hash is the input value of its key.
 //! - A single edge: pedersen_hash(child_hash, edge_mark) + edge_length.
 //! - '0' and '1' edges: pedersen_hash(zero_child_hash, one_child_hash).
-
-#[cfg(test)]
-#[path = "patricia_hash_tree_test.rs"]
-mod patricia_hash_tree_test;
 
 use bitvec::prelude::{BitArray, Msb0};
 use starknet_crypto::{pedersen_hash, FieldElement};

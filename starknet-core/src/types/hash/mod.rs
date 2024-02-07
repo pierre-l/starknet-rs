@@ -2,11 +2,11 @@ use starknet_crypto::pedersen_hash;
 use starknet_ff::FieldElement;
 
 use crate::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction};
-use tree::calculate_root;
+use merkle_tree::calculate_root;
 
 use super::{BlockWithTxs, Event, Transaction};
 
-mod tree;
+mod merkle_tree;
 
 pub fn compute_block_hash(block: &BlockWithTxs, events: &[Event]) -> FieldElement {
     let transaction_commitment = calculate_transaction_commitment(&block.transactions);
@@ -27,7 +27,7 @@ pub fn compute_block_hash(block: &BlockWithTxs, events: &[Event]) -> FieldElemen
     ])
 }
 
-pub fn hash_array(felts: &[FieldElement]) -> FieldElement {
+fn hash_array(felts: &[FieldElement]) -> FieldElement {
     let len_hash = &from_u128(felts.len() as u128);
     let cumulative_hash = felts
         .iter()
@@ -64,7 +64,7 @@ fn from_u128(val: u128) -> FieldElement {
 /// The transaction commitment is the root of the Patricia Merkle tree with height 64
 /// constructed by adding the (transaction_index, transaction_hash_with_signature)
 /// key-value pairs to the tree and computing the root hash.
-pub fn calculate_transaction_commitment(transactions: &[Transaction]) -> FieldElement {
+fn calculate_transaction_commitment(transactions: &[Transaction]) -> FieldElement {
     use rayon::prelude::*;
 
     let mut final_hashes = Vec::new();
@@ -140,7 +140,7 @@ fn calculate_signature_hash(signature: &[FieldElement]) -> FieldElement {
 /// The event commitment is the root of the Patricia Merkle tree with height 64
 /// constructed by adding the (event_index, event_hash) key-value pairs to the
 /// tree and computing the root hash.
-pub fn calculate_event_commitment(events: &[Event]) -> FieldElement {
+fn calculate_event_commitment(events: &[Event]) -> FieldElement {
     use rayon::prelude::*;
 
     let mut event_hashes = Vec::new();
@@ -188,7 +188,7 @@ fn calculate_event_hash(event: &Event) -> FieldElement {
 /// accumulator is on each update replaced with the `H(hash, value)` and the number of count
 /// incremented by one.
 #[derive(Default)]
-pub struct HashChain {
+struct HashChain {
     hash: FieldElement,
     count: usize,
 }
@@ -200,11 +200,6 @@ impl HashChain {
             .count
             .checked_add(1)
             .expect("could not have deserialized larger than usize Vecs");
-    }
-
-    pub fn chain_update(mut self, value: FieldElement) -> Self {
-        self.update(value);
-        self
     }
 
     pub fn finalize(self) -> FieldElement {
