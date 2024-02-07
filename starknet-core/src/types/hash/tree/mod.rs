@@ -62,9 +62,15 @@ pub fn calculate_root(values: Vec<FieldElement>) -> FieldElement {
     let leaves: Vec<Entry> = values
         .into_iter()
         .zip(0u64..)
-        .map(|(felt, idx)| Entry { key: idx.to_be_bytes().into(), value: felt })
+        .map(|(felt, idx)| Entry {
+            key: idx.to_be_bytes().into(),
+            value: felt,
+        })
         .collect();
-    get_hash(SubTree { leaves: &leaves[..], height: 0_u8 })
+    get_hash(SubTree {
+        leaves: &leaves[..],
+        height: 0_u8,
+    })
 }
 
 // Recursive hash calculation. There are 3 cases:
@@ -74,7 +80,11 @@ pub fn calculate_root(values: Vec<FieldElement>) -> FieldElement {
 // - Binary: Some keys start with '0' bit and some start with '1' bit.
 fn get_hash(sub_tree: SubTree<'_>) -> FieldElement {
     if sub_tree.height == TREE_HEIGHT {
-        return sub_tree.leaves.first().expect("a leaf should not be empty").value;
+        return sub_tree
+            .leaves
+            .first()
+            .expect("a leaf should not be empty")
+            .value;
     }
     match get_splitting(&sub_tree) {
         SubTreeSplitting::CommonZerosPrefix(n_zeros) => get_edge_hash(sub_tree, n_zeros),
@@ -86,8 +96,10 @@ fn get_hash(sub_tree: SubTree<'_>) -> FieldElement {
 
 // Hash on a '0's sequence with the bottom sub tree.
 fn get_edge_hash(sub_tree: SubTree<'_>, n_zeros: u8) -> FieldElement {
-    let child_hash =
-        get_hash(SubTree { leaves: sub_tree.leaves, height: sub_tree.height + n_zeros });
+    let child_hash = get_hash(SubTree {
+        leaves: sub_tree.leaves,
+        height: sub_tree.height + n_zeros,
+    });
     let child_and_path_hash = pedersen_hash(&child_hash, &FieldElement::ZERO);
     FieldElement::from(child_and_path_hash) + FieldElement::from(n_zeros)
 }
@@ -111,8 +123,9 @@ fn get_binary_hash(sub_tree: SubTree<'_>, partition_point: usize) -> FieldElemen
 fn get_splitting(sub_tree: &SubTree<'_>) -> SubTreeSplitting {
     let mut height = sub_tree.height;
 
-    let first_one_bit_index =
-        sub_tree.leaves.partition_point(|entry| !entry.key[usize::from(height)]);
+    let first_one_bit_index = sub_tree
+        .leaves
+        .partition_point(|entry| !entry.key[usize::from(height)]);
     if first_one_bit_index < sub_tree.leaves.len() {
         return SubTreeSplitting::PartitionPoint(first_one_bit_index);
     }
@@ -121,7 +134,12 @@ fn get_splitting(sub_tree: &SubTree<'_>) -> SubTreeSplitting {
     let mut n_zeros = 1;
 
     while height < TREE_HEIGHT {
-        if sub_tree.leaves.last().expect("sub tree should not be empty").key[usize::from(height)] {
+        if sub_tree
+            .leaves
+            .last()
+            .expect("sub tree should not be empty")
+            .key[usize::from(height)]
+        {
             break;
         }
         n_zeros += 1;
