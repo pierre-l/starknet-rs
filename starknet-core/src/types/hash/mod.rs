@@ -1,7 +1,5 @@
 use starknet_crypto::pedersen_hash;
 use starknet_ff::FieldElement;
-// TODO Replace with a proper error.
-use anyhow::Result;
 
 use crate::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction};
 use tree::calculate_root;
@@ -10,11 +8,11 @@ use super::{BlockWithTxs, Event, Transaction};
 
 mod tree;
 
-pub fn compute_block_hash(block: &BlockWithTxs, events: &[Event]) -> Result<FieldElement> {
-    let transaction_commitment = calculate_transaction_commitment(&block.transactions)?;
-    let event_commitment = calculate_event_commitment(&events)?;
+pub fn compute_block_hash(block: &BlockWithTxs, events: &[Event]) -> FieldElement {
+    let transaction_commitment = calculate_transaction_commitment(&block.transactions);
+    let event_commitment = calculate_event_commitment(&events);
 
-    Ok(hash_array(&[
+    hash_array(&[
         from_u64(block.block_number),
         block.new_root,
         block.sequencer_address,
@@ -26,7 +24,7 @@ pub fn compute_block_hash(block: &BlockWithTxs, events: &[Event]) -> Result<Fiel
         FieldElement::ZERO,
         FieldElement::ZERO,
         block.parent_hash,
-    ]))
+    ])
 }
 
 pub fn hash_array(felts: &[FieldElement]) -> FieldElement {
@@ -66,7 +64,7 @@ fn from_u128(val: u128) -> FieldElement {
 /// The transaction commitment is the root of the Patricia Merkle tree with height 64
 /// constructed by adding the (transaction_index, transaction_hash_with_signature)
 /// key-value pairs to the tree and computing the root hash.
-pub fn calculate_transaction_commitment(transactions: &[Transaction]) -> Result<FieldElement> {
+pub fn calculate_transaction_commitment(transactions: &[Transaction]) -> FieldElement {
     use rayon::prelude::*;
 
     let mut final_hashes = Vec::new();
@@ -79,7 +77,7 @@ pub fn calculate_transaction_commitment(transactions: &[Transaction]) -> Result<
         })
     });
 
-    Ok(calculate_root(final_hashes))
+    calculate_root(final_hashes)
 }
 
 fn calculate_transaction_hash_with_signature(tx: &Transaction) -> FieldElement {
@@ -142,7 +140,7 @@ fn calculate_signature_hash(signature: &[FieldElement]) -> FieldElement {
 /// The event commitment is the root of the Patricia Merkle tree with height 64
 /// constructed by adding the (event_index, event_hash) key-value pairs to the
 /// tree and computing the root hash.
-pub fn calculate_event_commitment(events: &[Event]) -> Result<FieldElement> {
+pub fn calculate_event_commitment(events: &[Event]) -> FieldElement {
     use rayon::prelude::*;
 
     let mut event_hashes = Vec::new();
@@ -152,7 +150,7 @@ pub fn calculate_event_commitment(events: &[Event]) -> Result<FieldElement> {
         })
     });
 
-    Ok(calculate_root(event_hashes))
+    calculate_root(event_hashes)
 }
 
 /// Ported from [Pathfinder](https://github.com/eqlabs/pathfinder/blob/v0.10.3/crates/pathfinder/src/state/block_hash.rs#L454)

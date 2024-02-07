@@ -102,13 +102,11 @@ async fn block_hashing() {
     }
 
     let expected = block.block_hash;
-    assert_eq!(compute_block_hash(&block, &events).unwrap(), expected);
+    assert_eq!(compute_block_hash(&block, &events), expected);
 }
 
 #[tokio::test]
 async fn jsonrpc_get_block_with_txs() {
-    // TODO Remove
-    env_logger::init();
     let rpc_client = create_jsonrpc_client();
 
     let block = rpc_client
