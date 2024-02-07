@@ -110,7 +110,7 @@ async fn jsonrpc_get_block_with_txs() {
     let rpc_client = create_jsonrpc_client();
 
     let block = rpc_client
-        .get_block_with_txs(BlockId::Number(928343))
+        .get_block_with_txs(BlockId::Tag(BlockTag::Latest))
         .await
         .unwrap();
 
@@ -855,8 +855,8 @@ async fn jsonrpc_get_events() {
     let events = rpc_client
         .get_events(
             EventFilter {
-                from_block: Some(BlockId::Number(928343)),
-                to_block: Some(BlockId::Number(928343)),
+                from_block: Some(BlockId::Number(234500)),
+                to_block: Some(BlockId::Number(235000)),
                 address: None,
                 keys: None,
             },
