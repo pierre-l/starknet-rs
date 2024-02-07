@@ -850,8 +850,6 @@ async fn jsonrpc_syncing() {
 
 #[tokio::test]
 async fn jsonrpc_get_events() {
-    // TODO Remove
-    env_logger::init();
     let rpc_client = create_jsonrpc_client();
 
     let events = rpc_client
