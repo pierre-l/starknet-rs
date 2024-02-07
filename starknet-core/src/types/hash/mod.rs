@@ -65,17 +65,10 @@ fn from_u128(val: u128) -> FieldElement {
 /// constructed by adding the (transaction_index, transaction_hash_with_signature)
 /// key-value pairs to the tree and computing the root hash.
 fn calculate_transaction_commitment(transactions: &[Transaction]) -> FieldElement {
-    use rayon::prelude::*;
-
-    let mut final_hashes = Vec::new();
-    rayon::scope(|s| {
-        s.spawn(|_| {
-            final_hashes = transactions
-                .par_iter()
-                .map(|tx| calculate_transaction_hash_with_signature(tx))
-                .collect();
-        })
-    });
+    let final_hashes = transactions
+        .iter()
+        .map(|tx| calculate_transaction_hash_with_signature(tx))
+        .collect();
 
     calculate_root(final_hashes)
 }
@@ -141,14 +134,7 @@ fn calculate_signature_hash(signature: &[FieldElement]) -> FieldElement {
 /// constructed by adding the (event_index, event_hash) key-value pairs to the
 /// tree and computing the root hash.
 fn calculate_event_commitment(events: &[Event]) -> FieldElement {
-    use rayon::prelude::*;
-
-    let mut event_hashes = Vec::new();
-    rayon::scope(|s| {
-        s.spawn(|_| {
-            event_hashes = events.par_iter().map(calculate_event_hash).collect();
-        })
-    });
+    let event_hashes = events.iter().map(calculate_event_hash).collect();
 
     calculate_root(event_hashes)
 }
